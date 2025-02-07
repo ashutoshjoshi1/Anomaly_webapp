@@ -11,12 +11,22 @@ def load_and_preprocess_data(file):
     df = pd.read_csv(file)
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors='coerce')
     df = df.sort_values(by="Timestamp").reset_index(drop=True)
-    
+
+    # Select only numeric columns for scaling
+    df_numeric = df.select_dtypes(include=[np.number])
+
+    # Handle missing values (optional)
+    df_numeric.fillna(df_numeric.median(), inplace=True)
+
+    # Apply MinMaxScaler only to numeric data
     scaler = MinMaxScaler()
-    df_numeric = df.drop(columns=["Timestamp"], errors='ignore')
     df_scaled = pd.DataFrame(scaler.fit_transform(df_numeric), columns=df_numeric.columns, index=df.index)
+
+    # Restore the Timestamp column
     df_scaled["Timestamp"] = df["Timestamp"]
+
     return df, df_scaled
+
 
 def train_anomaly_model(df_scaled):
     input_dim = df_scaled.shape[1] - 1
