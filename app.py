@@ -12,17 +12,13 @@ def load_and_preprocess_data(file):
     df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors='coerce')
     df = df.sort_values(by="Timestamp").reset_index(drop=True)
 
-    # Select only numeric columns for scaling
     df_numeric = df.select_dtypes(include=[np.number])
 
-    # Handle missing values (optional)
     df_numeric.fillna(df_numeric.median(), inplace=True)
 
-    # Apply MinMaxScaler only to numeric data
     scaler = MinMaxScaler()
     df_scaled = pd.DataFrame(scaler.fit_transform(df_numeric), columns=df_numeric.columns, index=df.index)
 
-    # Restore the Timestamp column
     df_scaled["Timestamp"] = df["Timestamp"]
 
     return df, df_scaled
@@ -51,9 +47,10 @@ def train_anomaly_model(df_scaled):
     return df_scaled
 
 def plot_data(df, df_scaled):
-    columns_to_plot = [col for col in df.columns if col != "Timestamp"]
+    columns_to_plot = [col for col in df.columns if col not in ["Timestamp", "Processed File"]]
     for column in columns_to_plot:
-        fig = px.scatter(df, x="Timestamp", y=column, color=df_scaled["Anomaly"].map({0:'Normal', 1:'Anomaly'}),
+        fig = px.scatter(df, x="Timestamp", y=column, color=df_scaled["Anomaly"].map({0:'green', 1:'red'}),
+                         color_discrete_map={"green": "green", "red": "red"},
                          title=f"{column} - Anomaly Detection")
         st.plotly_chart(fig)
 
